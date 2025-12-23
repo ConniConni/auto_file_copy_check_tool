@@ -200,7 +200,7 @@ def scan_review_records(
         return []
 
     # Search for review records (recursively to handle date folders)
-    pattern = "レビュー記録表(社外)_*.xlsx"
+    pattern = "レビュー記録表(社外)*.xlsx"
     logger.debug(f"レビュー記録パターンで再帰検索: {pattern}")
     found_files: list[Path] = []
 
