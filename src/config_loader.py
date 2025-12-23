@@ -1,9 +1,12 @@
 """Configuration loader module for file copy tool."""
 
 import configparser
+import logging
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class PhaseCode(StrEnum):
@@ -55,6 +58,8 @@ def load_config(config_path: Path) -> Config:
         configparser.NoSectionError: If required section is missing.
         configparser.NoOptionError: If required option is missing.
     """
+    logger.debug(f"[設定ファイル読み込み開始] {config_path}")
+
     if not config_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
@@ -64,6 +69,8 @@ def load_config(config_path: Path) -> Config:
     # Load paths
     base_path_internal = Path(parser.get("Paths", "base_path_internal"))
     base_path_external = Path(parser.get("Paths", "base_path_external"))
+    logger.debug(f"内部ベースパス: {base_path_internal}")
+    logger.debug(f"外部ベースパス: {base_path_external}")
 
     # Load document patterns
     document_patterns: dict[PhaseCode, list[str]] = {}
@@ -73,15 +80,19 @@ def load_config(config_path: Path) -> Config:
             # Split by comma and strip whitespace
             patterns = [p.strip() for p in pattern_str.split(",") if p.strip()]
             document_patterns[phase] = patterns
+            logger.debug(f"工程 {phase.value} のドキュメントパターン: {patterns}")
         else:
             document_patterns[phase] = []
+            logger.debug(f"工程 {phase.value} のドキュメントパターン: (なし)")
 
     # Load extra files
     extra_files_str = parser.get("ExtraFiles", "include_files")
     if extra_files_str.strip():
         extra_files = [f.strip() for f in extra_files_str.split(",") if f.strip()]
+        logger.debug(f"例外ファイル: {extra_files}")
     else:
         extra_files = []
+        logger.debug("例外ファイル: (なし)")
 
     # Load project information (optional)
     project_name = None
@@ -97,6 +108,15 @@ def load_config(config_path: Path) -> Config:
         if parser.has_option("Project", "item_name"):
             item_name_str = parser.get("Project", "item_name").strip()
             item_name = item_name_str if item_name_str else None
+
+    logger.debug(
+        f"デフォルトプロジェクト情報: "
+        f"案件名={project_name or '(未設定)'} | "
+        f"Q={quarter or '(未設定)'} | "
+        f"アイテム={item_name if item_name is not None else '(未設定)'}"
+    )
+
+    logger.debug("[設定ファイル読み込み完了]")
 
     return Config(
         base_path_internal=base_path_internal,

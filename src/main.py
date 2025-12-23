@@ -41,8 +41,12 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_logging() -> None:
-    """Setup logging configuration."""
+def setup_logging(verbose: bool = False) -> None:
+    """Setup logging configuration.
+
+    Args:
+        verbose: If True, set console handler to DEBUG level.
+    """
     log_filename = f"file_copy_tool_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
     # Configure logging
@@ -56,20 +60,20 @@ def setup_logging() -> None:
         ],
     )
 
-    # Set console handler to INFO level
+    # Set console handler level based on verbose flag
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG if verbose else logging.INFO)
     logging.getLogger().handlers[1] = console_handler
 
 
-def get_user_input(config: Config) -> tuple[str, str, str, list[PhaseCode], OperationMode, int]:
+def get_user_input(config: Config) -> tuple[str, str, str, list[PhaseCode], OperationMode, int, bool]:
     """Get user input for operation parameters.
 
     Args:
         config: Configuration object (may contain default values).
 
     Returns:
-        tuple: (project_name, quarter, item_name, phases, mode, days_ago)
+        tuple: (project_name, quarter, item_name, phases, mode, days_ago, verbose)
     """
     print("\n=== ファイルコピーチェックツール ===\n")
 
@@ -136,7 +140,14 @@ def get_user_input(config: Config) -> tuple[str, str, str, list[PhaseCode], Oper
     except ValueError:
         days_ago = 0
 
-    return project_name, quarter, item_name, phases, mode, days_ago
+    # Get log mode
+    print("\nログ出力モードを選択してください:")
+    print("1. 通常モード（INFO以上）")
+    print("2. 詳細モード（DEBUG以上 - トラブルシューティング用）")
+    log_mode_choice = input("選択 (1-2): ").strip()
+    verbose = log_mode_choice == "2"
+
+    return project_name, quarter, item_name, phases, mode, days_ago, verbose
 
 
 def scan_all_files(
@@ -337,7 +348,8 @@ def execute_copy(
 
 def main() -> None:
     """Main entry point."""
-    setup_logging()
+    # Initial setup with INFO level (will be reconfigured after user input)
+    setup_logging(verbose=False)
 
     # Parse command line arguments
     args = parse_args()
@@ -355,7 +367,10 @@ def main() -> None:
         sys.exit(1)
 
     # Get user input
-    project_name, quarter, item_name, phases, mode, days_ago = get_user_input(config)
+    project_name, quarter, item_name, phases, mode, days_ago, verbose = get_user_input(config)
+
+    # Reconfigure logging with user's verbose preference
+    setup_logging(verbose=verbose)
 
     # Scan files
     logging.info("ファイルスキャンを開始します...")

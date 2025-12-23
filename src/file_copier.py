@@ -39,9 +39,17 @@ def _build_phase_path(
 
     # If item_name is empty, skip that hierarchy level
     if item_name.strip():
-        return base_path / project_name / quarter / item_name / phase_folder
+        result = base_path / project_name / quarter / item_name / phase_folder
     else:
-        return base_path / project_name / quarter / phase_folder
+        result = base_path / project_name / quarter / phase_folder
+
+    logger.debug(
+        f"[コピー用パス構築] base={base_path} | "
+        f"案件={project_name} | Q={quarter} | "
+        f"アイテム={'(なし)' if not item_name.strip() else item_name} | "
+        f"工程={phase_folder} → {result}"
+    )
+    return result
 
 
 def copy_document(
@@ -67,18 +75,24 @@ def copy_document(
     Returns:
         bool: True if copy succeeded, False otherwise.
     """
+    logger.debug(f"[ドキュメントコピー開始] {source_file.name} モード={mode}")
+
     try:
         if mode == OperationMode.OUTGOING:
             # Internal -> External
             dest_base = config.base_path_external
+            logger.debug(f"コピー先ベースパス(外部): {dest_base}")
         else:  # INCOMING
             # External -> Internal
             dest_base = config.base_path_internal
+            logger.debug(f"コピー先ベースパス(内部): {dest_base}")
 
         dest_phase_dir = _build_phase_path(dest_base, project_name, quarter, item_name, phase)
+        logger.debug(f"コピー先ディレクトリ作成: {dest_phase_dir}")
         dest_phase_dir.mkdir(parents=True, exist_ok=True)
 
         dest_file = dest_phase_dir / source_file.name
+        logger.debug(f"コピー実行: {source_file} → {dest_file}")
         shutil.copy2(source_file, dest_file)
 
         logger.info(f"ドキュメントをコピーしました: {source_file.name} -> {dest_file}")
@@ -113,13 +127,18 @@ def copy_review_record_outgoing(
     Returns:
         bool: True if copy succeeded, False otherwise.
     """
+    logger.debug(f"[レビュー記録コピー(Outgoing)開始] {source_file.name}")
+
     try:
         dest_base = config.base_path_external
+        logger.debug(f"コピー先ベースパス(外部): {dest_base}")
         dest_phase_dir = _build_phase_path(dest_base, project_name, quarter, item_name, phase)
         dest_artifacts_dir = dest_phase_dir / "成果物"
+        logger.debug(f"コピー先成果物ディレクトリ作成: {dest_artifacts_dir}")
         dest_artifacts_dir.mkdir(parents=True, exist_ok=True)
 
         dest_file = dest_artifacts_dir / source_file.name
+        logger.debug(f"コピー実行: {source_file} → {dest_file}")
         shutil.copy2(source_file, dest_file)
 
         logger.info(f"レビュー記録表をコピーしました: {source_file.name} -> {dest_file}")
@@ -154,17 +173,24 @@ def find_matching_file_in_internal(
     Returns:
         Path | None: Found file path or None if not found.
     """
+    logger.debug(f"[内部エリアでファイル検索] {file_name}")
+
     internal_base = config.base_path_internal
     phase_dir = _build_phase_path(internal_base, project_name, quarter, item_name, phase)
 
     if not phase_dir.exists():
+        logger.debug(f"内部工程ディレクトリが存在しません: {phase_dir}")
         return None
+
+    logger.debug(f"再帰検索開始: {phase_dir}")
 
     # Search recursively in phase directory
     for found_file in phase_dir.rglob(file_name):
         if found_file.is_file():
+            logger.debug(f"一致するファイルを発見: {found_file}")
             return found_file
 
+    logger.debug(f"一致するファイルが見つかりませんでした: {file_name}")
     return None
 
 
@@ -189,6 +215,8 @@ def copy_review_record_incoming(
     Returns:
         bool: True if copy succeeded, False otherwise.
     """
+    logger.debug(f"[レビュー記録コピー(Incoming)開始] {source_file.name}")
+
     try:
         # Find matching file in internal area
         dest_file = find_matching_file_in_internal(
@@ -206,6 +234,7 @@ def copy_review_record_incoming(
             )
             return False
 
+        logger.debug(f"コピー実行: {source_file} → {dest_file}")
         shutil.copy2(source_file, dest_file)
         logger.info(f"レビュー記録表をコピーしました: {source_file.name} -> {dest_file}")
         return True
@@ -239,13 +268,18 @@ def copy_extra_file(
     Returns:
         bool: True if copy succeeded, False otherwise.
     """
+    logger.debug(f"[例外ファイルコピー開始] {source_file.name}")
+
     try:
         dest_base = config.base_path_external
+        logger.debug(f"コピー先ベースパス(外部): {dest_base}")
         dest_phase_dir = _build_phase_path(dest_base, project_name, quarter, item_name, phase)
         dest_artifacts_dir = dest_phase_dir / "成果物"
+        logger.debug(f"コピー先成果物ディレクトリ作成: {dest_artifacts_dir}")
         dest_artifacts_dir.mkdir(parents=True, exist_ok=True)
 
         dest_file = dest_artifacts_dir / source_file.name
+        logger.debug(f"コピー実行: {source_file} → {dest_file}")
         shutil.copy2(source_file, dest_file)
 
         logger.info(f"例外ファイルをコピーしました: {source_file.name} -> {dest_file}")
