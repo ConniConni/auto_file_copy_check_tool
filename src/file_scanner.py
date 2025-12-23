@@ -24,9 +24,9 @@ def should_include_file(file_path: Path, days_ago: int) -> bool:
     Returns:
         bool: True if file should be included, False otherwise.
     """
-    cutoff_time = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(
-        days=days_ago
-    )
+    cutoff_time = datetime.now().replace(
+        hour=0, minute=0, second=0, microsecond=0
+    ) - timedelta(days=days_ago)
     file_mtime = datetime.fromtimestamp(file_path.stat().st_mtime)
     return file_mtime >= cutoff_time
 
@@ -159,14 +159,15 @@ def scan_review_records(
         base_path = config.base_path_external
         # Search in 成果物 directory (no nested structure in external)
         artifacts_dir = (
-            _build_phase_path(base_path, project_name, quarter, item_name, phase) / "成果物"
+            _build_phase_path(base_path, project_name, quarter, item_name, phase)
+            / "成果物"
         )
 
     if not artifacts_dir.exists():
         return []
 
     # Search for review records (recursively to handle date folders)
-    pattern = "レビュー記録表(社外)_*.xlsx"
+    pattern = "レビュー記録表(社外)*.xlsx"
     found_files: list[Path] = []
 
     for file_path in artifacts_dir.rglob(pattern):
