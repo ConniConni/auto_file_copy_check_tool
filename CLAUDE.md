@@ -290,7 +290,7 @@ include_files =
 
 ### 9.2 ログファイル
 - ファイル名: `file_copy_tool_YYYYMMDD_HHMMSS.log`
-- 保存先: ツール実行ディレクトリ
+- 保存先: `log/`ディレクトリ（自動作成）
 - フォーマット: `[YYYY-MM-DD HH:MM:SS] [LEVEL] メッセージ`
 
 ---

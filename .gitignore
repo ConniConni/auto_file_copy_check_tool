@@ -70,6 +70,7 @@ ehthumbs.db
 # Logs
 *.log
 file_copy_tool_*.log
+log/
 
 # Project specific
 # config.ini is included as template, but you may want to ignore local modifications
