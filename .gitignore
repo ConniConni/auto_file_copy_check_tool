@@ -75,3 +75,8 @@ file_copy_tool_*.log
 # config.ini is included as template, but you may want to ignore local modifications
 # Uncomment the line below if you want to ignore local config changes:
 # config.ini
+
+# Test data
+test_data/
+config_test.ini
+create_test_files.py
